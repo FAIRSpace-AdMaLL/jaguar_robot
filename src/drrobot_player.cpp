@@ -91,6 +91,7 @@ Publishes to (name / type):
 #include <jaguar4x4_2014/IMUData.h>
 
 #include <DrRobotMotionSensorDriver.hpp>
+#include "CTimer.h"
 
 #define MOTOR_NUM           4       //max
 #define MOTOR_BOARD_NUM     2       //max
@@ -108,8 +109,10 @@ public:
     ros::Publisher motorBoardInfo_pub_;
     ros::Publisher gps_pub_;
     ros::Publisher imu_pub_;
+    ros::Publisher odometryPub;
     ros::Subscriber motor_cmd_sub_;	
     std::string robot_prefix_;
+    nav_msgs::Odometry odometry;
 
     DrRobotPlayerNode()
     {
@@ -189,6 +192,9 @@ public:
         motorBoardInfo_pub_ = node_.advertise<jaguar4x4_2014::MotorBoardInfoArray>("drrobot_motorboard", 1);
         gps_pub_ = node_.advertise<jaguar4x4_2014::GPSInfo>("drrobot_gps", 1);
         imu_pub_ = node_.advertise<jaguar4x4_2014::IMUData>("drrobot_imu", 1);
+      	
+	//Odometry publish
+        odometryPub = node_.advertise<nav_msgs::Odometry>("/odom", 1);
 	
 	drrobotMotionDriver_ = new DrRobotMotionSensorDriver();
         if (  (robotType_ == "Jaguar") )
@@ -229,9 +235,13 @@ public:
 
       }
 
+
       //motor_cmd_sub_ = node_.subscribe<std_msgs::String>("drrobot_motor_cmd", 1, boost::bind(&DrRobotPlayerNode::cmdReceived, this, _1));
       motor_cmd_sub_ = node_.subscribe<geometry_msgs::Twist>("drrobot_cmd_vel", 1, boost::bind(&DrRobotPlayerNode::cmdReceived, this, _1));
-
+	
+      //Reset odometry	     
+      odomX=odomY=odomPhi=lastTime=lastForward=lastTurn=0;
+ 
       std::stringstream ss;
         
       ss << "MMW !MG";
@@ -266,7 +276,7 @@ public:
 	ROS_INFO("Received control command: [%d, %d]", leftWheelCmd,rightWheelCmd);
 
 	std::stringstream ss;
-        
+ 
 	ss << "MMW !M " << leftWheelCmd; 
 	ss << " " << rightWheelCmd;
 	ss.seekg(0,std::ios::end);
@@ -281,6 +291,28 @@ public:
 //	 ROS_INFO("Received motor command len: [%d]", nLen);
         drrobotMotionDriver_->sendCommand(ss.str().c_str(), nLen);
       
+   	//dead-reckoning (odometry) estimation 
+	float odometryTime = odoTimer.getTime()/1000.0;
+	float displacement = lastForward*(odometryTime-lastTime);
+	odomX += displacement*cos(odomPhi);
+	odomY += displacement*sin(odomPhi);
+	odomPhi = lastTurn; 
+	lastTime = odometryTime; 
+	lastForward = g_vel;
+	lastTurn = t_vel;
+	std::cout << "Odometry x " << odomX << " y "<< odomY << " phi " << odomPhi << std::endl;
+        odometry.pose.pose.position.x = odomX;
+      	odometry.pose.pose.position.y = odomY;
+      	odometry.pose.pose.position.z = 0;
+      	tf::Quaternion orientation;
+      	orientation.setRPY(0,0,odomPhi);
+      	odometry.pose.pose.orientation.x = orientation[0];
+     	odometry.pose.pose.orientation.y = orientation[1];
+      	odometry.pose.pose.orientation.z = orientation[2];
+        odometry.pose.pose.orientation.w = orientation[3];
+      	odometryPub.publish(odometry);
+
+            //  ROS_INFO("publish GPS Info");
     }
 
     void doUpdate()
@@ -375,8 +407,9 @@ public:
               gpsInfo.longitude = gpsSensorData_.longitude;
               gpsInfo.vog = gpsSensorData_.vog;
               gpsInfo.cog = gpsSensorData_.cog;
+      	      
+	      
 
-            //  ROS_INFO("publish GPS Info");
               gps_pub_.publish(gpsInfo);
 	       
 		//send ping command here
@@ -397,6 +430,7 @@ private:
     struct IMUSensorData imuSensorData_;
     struct GPSSensorData gpsSensorData_;
 
+
     std::string robotType_;
     std::string robotID_;
     std::string robotIP_;
@@ -412,7 +446,14 @@ private:
 
     int cntNum_;
 
+    //odometry status
+    CTimer odoTimer;
+    float lastTime,lastForward,lastTurn;
+    float odomX,odomY,odomPhi;
 };
+
+
+
 
 
 
@@ -429,11 +470,14 @@ int main(int argc, char** argv)
     }
     /////////////////////////////////////////////////////////////////
 
+    
     ros::Rate loop_rate(50);      //10Hz
+
 
     while (n.ok())
     {
       drrobotPlayer.doUpdate();
+      	
       
       ros::spinOnce();
      loop_rate.sleep();

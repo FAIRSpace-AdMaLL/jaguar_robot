@@ -72,6 +72,7 @@ include_directories(include
 # add_library(jaguar4x4_2014
 #   src/${PROJECT_NAME}/jaguar4x4_2014.cpp
 # )
+add_library(robot_timer src/CTimer.cpp)
 
 ## Declare a cpp executable
 add_executable(jaguar4x4_2014_node src/drrobot_player.cpp src/DrRobotMotionSensorDriver.cpp)
@@ -82,15 +83,18 @@ add_executable(drrobot_keyboard_teleop_node src/drrobot_keyboard_teleop.cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(jaguar4x4_2014_node
-   ${catkin_LIBRARIES}
+ robot_timer  
+ ${catkin_LIBRARIES}
  )
  target_link_libraries(drrobot_keyboard_teleop_node
+  robot_timer
   ${catkin_LIBRARIES}
  )
 #############
 ## Install ##
 #############
 
+add_dependencies(robot_timer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
