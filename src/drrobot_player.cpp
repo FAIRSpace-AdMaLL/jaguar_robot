@@ -241,7 +241,9 @@ public:
 	
       //Reset odometry	     
       odomX=odomY=odomPhi=lastTime=lastForward=lastTurn=0;
- 
+      odoTimer.reset();                                                                                                              
+      odoTimer.start(); 
+
       std::stringstream ss;
         
       ss << "MMW !MG";
@@ -266,7 +268,7 @@ public:
     {
       	double g_vel = cmd_vel->linear.x;
         double t_vel = cmd_vel->angular.z;
-
+	std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
         double leftWheel = (2 * g_vel - t_vel* wheelDis_) / (2 * wheelRadius_);
         double rightWheel = (t_vel* wheelDis_ + 2 * g_vel) / (2 * wheelRadius_);
 
@@ -293,6 +295,7 @@ public:
       
    	//dead-reckoning (odometry) estimation 
 	float odometryTime = odoTimer.getTime()/1000.0;
+	std::cout << "Time " << odometryTime << std::endl;
 	float displacement = lastForward*(odometryTime-lastTime);
 	odomX += displacement*cos(odomPhi);
 	odomY += displacement*sin(odomPhi);
