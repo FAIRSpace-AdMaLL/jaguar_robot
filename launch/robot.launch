@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<!-- robot drivers -->
+  <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers">
+  </node>
+
+<!-- zed camera drivers -->
+<arg name="svo_file"             default="" /> <!-- <arg name="svo_file" default="path/to/svo/file.svo"> -->
+    <arg name="stream"               default="" /> <!-- <arg name="stream" default="<ip_address>:<port>"> -->
+
+    <arg name="node_name"            default="zed_node" />
+    <arg name="camera_model"         default="zed" /> <!-- 'zed' or 'zedm' -->
+    <arg name="publish_urdf"         default="true" />
+
+    <group ns="zed">
+        <include file="$(find zed_wrapper)/launch/zed_camera.launch">
+            <arg name="svo_file"            value="$(arg svo_file)" />
+            <arg name="stream"              value="$(arg stream)" />
+            <arg name="node_name"           value="$(arg node_name)" />
+            <arg name="camera_model"        value="$(arg camera_model)" />
+            <arg name="publish_urdf"        value="$(arg publish_urdf)" />
+        </include>
+    </group>
+
+</launch>
