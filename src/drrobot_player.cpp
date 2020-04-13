@@ -267,7 +267,7 @@ public:
     void cmdReceived(const geometry_msgs::Twist::ConstPtr& cmd_vel)
     {
       	double g_vel = cmd_vel->linear.x;
-        double t_vel = cmd_vel->angular.z; // * 1.5;
+        double t_vel = cmd_vel->angular.z * 1.5;
 	std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
         double leftWheel = (2 * g_vel - t_vel* wheelDis_) / (2 * wheelRadius_);
         double rightWheel = (t_vel* wheelDis_ + 2 * g_vel) / (2 * wheelRadius_);
