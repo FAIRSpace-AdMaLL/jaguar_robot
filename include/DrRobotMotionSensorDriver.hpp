@@ -50,9 +50,9 @@
 #include <boost/shared_ptr.hpp>
 #include <poll.h>
 
-#define COMM_LOST_TH	200
-#define KNNOT2MS   	0.5144444
-#define FULLAD    	4095
+#define COMM_LOST_TH 200
+#define KNNOT2MS 0.5144444
+#define FULLAD 4095
 //! A namespace containing the DrRobot Motion/Sensor driver
 namespace DrRobot_MotionSensorDriver
 {
@@ -62,16 +62,14 @@ namespace DrRobot_MotionSensorDriver
   */
   const int MOTORSENSOR_NUM = 4;
 
-
   /*! This definition limits the motor driver board number
   */
-    const int MOTORBOARD_NUM = 2;
+  const int MOTORBOARD_NUM = 2;
 
-
- /*! This definition limits all the string variables length < 255
+  /*! This definition limits all the string variables length < 255
   * such as robotID, robotIP and serial port name
  */
-  const int CHAR_BUF_LEN  =  255;
+  const int CHAR_BUF_LEN = 255;
 
   /*! This definition limits the communication receiving buffer length
    */
@@ -85,20 +83,37 @@ namespace DrRobot_MotionSensorDriver
    * Normally for standard robot, driver will use Network to communicate with robot
    * If you use RS232 module connect robot with your PC, you need set as Serial
    */
-  enum CommMethod {Network, Serial};
+  enum CommMethod
+  {
+    Network,
+    Serial
+  };
   /*! \enum CommState
    *  Driver communication status
    */
-  enum CommState { Disconnected, Connected};
+  enum CommState
+  {
+    Disconnected,
+    Connected
+  };
 
   /*! \enum robot type
    *  specify the robot system on the robot
    */
-  enum RobotType {Jaguar,Puma};
+  enum RobotType
+  {
+    Jaguar,
+    Puma
+  };
   /*! \enum CtrlMethod
    *  specify control method of the motor control command
    */
-  enum CtrlMethod {OpenLoop,Velocity,Position};
+  enum CtrlMethod
+  {
+    OpenLoop,
+    Velocity,
+    Position
+  };
 
   /*! \struct  DrRobotMotionConfig
    *  to configure the driver
@@ -118,32 +133,31 @@ namespace DrRobot_MotionSensorDriver
    */
   struct MotorSensorData
   {
-    int motorSensorEncoderPos[MOTORSENSOR_NUM];         //!< encoder count reading
-    int motorSensorEncoderVel[MOTORSENSOR_NUM];         //!< encoder velocity reading
-    int motorSensorCurrent[MOTORSENSOR_NUM];            //!< motor current AD value reading,
-    int motorSensorTemperature[MOTORSENSOR_NUM];        //!< motor temperature sensor reading
-    int motorSensorPWM[MOTORSENSOR_NUM];                //!< motor driver board output PWM value,
-    int motorSensorEncoderPosDiff[MOTORSENSOR_NUM];     //!< encoder count reading difference related with last reading
+    int motorSensorEncoderPos[MOTORSENSOR_NUM];     //!< encoder count reading
+    int motorSensorEncoderVel[MOTORSENSOR_NUM];     //!< encoder velocity reading
+    int motorSensorCurrent[MOTORSENSOR_NUM];        //!< motor current AD value reading,
+    int motorSensorTemperature[MOTORSENSOR_NUM];    //!< motor temperature sensor reading
+    int motorSensorPWM[MOTORSENSOR_NUM];            //!< motor driver board output PWM value,
+    int motorSensorEncoderPosDiff[MOTORSENSOR_NUM]; //!< encoder count reading difference related with last reading
   };
-
 
   /*! \struct  MotorDriverBoardData
    *  for motor driver board information
    */
   struct MotorBoardData
   {
-    int status[MOTORBOARD_NUM];                         //!< motor board status, read back from query "FF"
-    int temp1[MOTORBOARD_NUM];                           //!< motor board internal temperature 1
-    int temp2[MOTORBOARD_NUM];                           //!< motor board internal temperature 2
-    int temp3[MOTORBOARD_NUM];                           //!< motor board internal temperature 3
+    int status[MOTORBOARD_NUM]; //!< motor board status, read back from query "FF"
+    int temp1[MOTORBOARD_NUM];  //!< motor board internal temperature 1
+    int temp2[MOTORBOARD_NUM];  //!< motor board internal temperature 2
+    int temp3[MOTORBOARD_NUM];  //!< motor board internal temperature 3
 
-    double volMain[MOTORBOARD_NUM];                     //!< motor board main power voltage, default is battery voltage
-    double vol12V[MOTORBOARD_NUM];                      //!< motor board 12V power voltage
-    double vol5V[MOTORBOARD_NUM];                       //!< motor board 5V power voltage
+    double volMain[MOTORBOARD_NUM]; //!< motor board main power voltage, default is battery voltage
+    double vol12V[MOTORBOARD_NUM];  //!< motor board 12V power voltage
+    double vol5V[MOTORBOARD_NUM];   //!< motor board 5V power voltage
 
-    int dinput[MOTORBOARD_NUM];                             //!< digital input, not used now
-    int doutput[MOTORBOARD_NUM];                             //!< digital output, not used now
-    int ack[MOTORBOARD_NUM];                            //!< 0- right command received("+"), -1 wrong command("-")
+    int dinput[MOTORBOARD_NUM];  //!< digital input, not used now
+    int doutput[MOTORBOARD_NUM]; //!< digital output, not used now
+    int ack[MOTORBOARD_NUM];     //!< 0- right command received("+"), -1 wrong command("-")
   };
 
   /*! \struct  GPSInfoData
@@ -151,14 +165,14 @@ namespace DrRobot_MotionSensorDriver
    */
   struct GPSSensorData
   {
-    long timeStamp;             //!< GPS Message time stamp, format: hhmmss
-    long dateStamp;             //!< GPS date stamp, format:ddmmyy
+    long timeStamp; //!< GPS Message time stamp, format: hhmmss
+    long dateStamp; //!< GPS date stamp, format:ddmmyy
 
-    int gpsStatus;              //!< GPS status, 0-fixed,1-differential, -1 -- invalid
-    double latitude;            //!< GPS latitude, - ==south, + == north
-    double longitude;           //!< GPS longitude, - ==west, + == east
-    double vog;                 //!< GPS velocity over ground   m/s
-    double cog;                 //!< GPS course over ground,,radian
+    int gpsStatus;    //!< GPS status, 0-fixed,1-differential, -1 -- invalid
+    double latitude;  //!< GPS latitude, - ==south, + == north
+    double longitude; //!< GPS longitude, - ==west, + == east
+    double vog;       //!< GPS velocity over ground   m/s
+    double cog;       //!< GPS course over ground,,radian
   };
 
   /*! \struct  IMUSensorData
@@ -166,28 +180,25 @@ namespace DrRobot_MotionSensorDriver
    */
   struct IMUSensorData
   {
-    int seq;                    //!< IMU sensor package sequence number, 0~ 255
-    double yaw;                 //!< yaw estimate from robot, unit:radian
-    double pitch;               //!< pitch estimate from robot, unit:radian, not used now
-    double roll;                //!< roll estimate from robot, unit:radian, not used now
+    int seq;      //!< IMU sensor package sequence number, 0~ 255
+    double yaw;   //!< yaw estimate from robot, unit:radian
+    double pitch; //!< pitch estimate from robot, unit:radian, not used now
+    double roll;  //!< roll estimate from robot, unit:radian, not used now
 
-    int gyro_x;                 //!< raw gyro x axis data
-    int gyro_y;                 //!< raw gyro y axis data
-    int gyro_z;                 //!< raw gyro z axis data
+    int gyro_x; //!< raw gyro x axis data
+    int gyro_y; //!< raw gyro y axis data
+    int gyro_z; //!< raw gyro z axis data
 
-    int accel_x;                 //!< raw accel x axis data
-    int accel_y;                 //!< raw accel y axis data
-    int accel_z;                 //!< raw accel z axis data
+    int accel_x; //!< raw accel x axis data
+    int accel_y; //!< raw accel y axis data
+    int accel_z; //!< raw accel z axis data
 
-    int comp_x;                 //!< raw magnetic sensor x axis data
-    int comp_y;                 //!< raw magnetic sensor y axis data
-    int comp_z;                 //!< raw magnetic sensor z axis data
-
+    int comp_x; //!< raw magnetic sensor x axis data
+    int comp_y; //!< raw magnetic sensor y axis data
+    int comp_z; //!< raw magnetic sensor z axis data
   };
 
-
-
-/*! \class DrRobotMotionSensorDriver
+  /*! \class DrRobotMotionSensorDriver
  *      This is the main class declare
  *      When using this driver library, user need call construct function DrRobotMotionSensorDriver() first, it will initialize
  *      all the internal variables to default value, then call setDrRobotMotionDriverConfig() function to initialize all the
@@ -234,7 +245,7 @@ namespace DrRobot_MotionSensorDriver
      * @return 0  port opened and starting communication
      *         others  something wrong there
      */
-    int openSerial(const char* serialPort, const long BAUD);
+    int openSerial(const char *serialPort, const long BAUD);
 
     /*! @brief
      *  If the driver is configured as using network communication, this function could open UDP port to connect with robot
@@ -244,21 +255,21 @@ namespace DrRobot_MotionSensorDriver
      * @return 0  port opened and starting communication
      *         others  something wrong there
      */
-    int openNetwork(const char*  robotIP, const int portNum );
+    int openNetwork(const char *robotIP, const int portNum);
 
     /*! @brief
      *  This function will use struct DrRobotMotionConfig to configure the driver
      * @param[in]   driverConfig struct DrRobotMotionConfig
      * @return null
      */
-    void setDrRobotMotionDriverConfig(DrRobotMotionConfig* driverConfig);
+    void setDrRobotMotionDriverConfig(DrRobotMotionConfig *driverConfig);
 
     /*! @brief
     *  This function will return the configuration of the driver
     * @param[in]   driverConfig struct DrRobotMotionConfig, will contain the driver configuration
     * @return null
     */
-    void getDrRobotMotionDriverConfig(DrRobotMotionConfig* driverConfig);
+    void getDrRobotMotionDriverConfig(DrRobotMotionConfig *driverConfig);
 
     /*! @brief
      *  This function is used for reading motor sensor back from motion controller
@@ -266,8 +277,7 @@ namespace DrRobot_MotionSensorDriver
      * @return 0 means success, other fail
      */
 
-
-    int readMotorSensorData(MotorSensorData* motorSensorData );
+    int readMotorSensorData(MotorSensorData *motorSensorData);
 
     /*! @brief
      *  This function is used for reading IMU sensor back from robot
@@ -275,21 +285,21 @@ namespace DrRobot_MotionSensorDriver
      * @param[in]   imuSensorData this struct IMUSensorData will contain all the latest IMU sensor data when returning
      * @return 0 means success, other fail
      */
-    int readIMUSensorData(IMUSensorData* imuSensorData );
+    int readIMUSensorData(IMUSensorData *imuSensorData);
 
     /*! @brief
      *  This function is used for reading GPS sensor back from robot
      * @param[in]   gpsSensorData this struct GPSSensorData will contain all the latest GPS sensor data when returning
      * @return 0 means success, other fail
      */
-    int readGPSSensorData(GPSSensorData* gpsSensorData);
+    int readGPSSensorData(GPSSensorData *gpsSensorData);
 
     /*! @brief
      *  This function is used for reading all the motor board information back from robot
      * @param[in]   motorBoardData this struct MotorBoardData will contain all the latest motor board info data when returning
      * @return 0 means success, other fail
      */
-    int readMotorBoardData(MotorBoardData* motorBoardData);
+    int readMotorBoardData(MotorBoardData *motorBoardData);
 
     /*! @brief
      *  This function is used for sending all the command to robot
@@ -297,7 +307,7 @@ namespace DrRobot_MotionSensorDriver
      * @return 0 means success, other fail
      */
 
-    int sendCommand(const char* msg, const int nLen);
+    int sendCommand(const char *msg, const int nLen);
 
   private:
     char _recBuf[MAXBUFLEN];
@@ -316,15 +326,15 @@ namespace DrRobot_MotionSensorDriver
     DrRobotMotionConfig *_robotConfig;
     boost::shared_ptr<boost::thread> _pCommThread;
     //private functions here
-    void debug_ouput(const char* errorstr);
-    int vali_ip(const char* ip_str);
+    void debug_ouput(const char *errorstr);
+    int vali_ip(const char *ip_str);
     int sendAck();
     void commWorkingThread();
     void DealWithPacket(const char *lpComData, const int nLen);
     void handleComData(const char *data, const int nLen);
-    void processIMUMessage(char * pData, const int nLen);
-    void processGPSMessage(char * pData, const int nLen);
-    void processMotorMessage(char * pData, const int nLen);
+    void processIMUMessage(char *pData, const int nLen);
+    void processGPSMessage(char *pData, const int nLen);
+    void processMotorMessage(char *pData, const int nLen);
     double trans2Degree(double angle);
     double trans2Temperature(double adValue);
     bool _stopComm;
@@ -332,7 +342,7 @@ namespace DrRobot_MotionSensorDriver
     void debugCommMessage(std::string msg);
 
     //sensor data here
-    struct GPSSensorData  _gpsSensorData;
+    struct GPSSensorData _gpsSensorData;
     struct IMUSensorData _imuSensorData;
     struct MotorSensorData _motorSensorData;
     struct MotorBoardData _motorBoardData;
@@ -342,6 +352,6 @@ namespace DrRobot_MotionSensorDriver
     static double tempTable[25];
   };
 
-}
+} // namespace DrRobot_MotionSensorDriver
 
 #endif /* DRROBOTMOTIONSENSORDRIVER_H_ */

@@ -11,24 +11,24 @@
 
 class CTimer
 {
-	public:
-		CTimer(int timeOut = TIMEOUT_INTERVAL);
-		~CTimer();
+public:
+	CTimer(int timeOut = TIMEOUT_INTERVAL);
+	~CTimer();
 
-		void reset(int timeOut = TIMEOUT_INTERVAL);
-		bool paused();
+	void reset(int timeOut = TIMEOUT_INTERVAL);
+	bool paused();
 
-		int pause();
-		int start();
-		int getTime();
-		bool timeOut();
+	int pause();
+	int start();
+	int getTime();
+	bool timeOut();
 
-	private:
-		int getRealTime();
-		int startTime;
-		int pauseTime;
-		bool running;
-		int timeoutInterval;
+private:
+	int getRealTime();
+	int startTime;
+	int pauseTime;
+	bool running;
+	int timeoutInterval;
 };
 
 #endif
