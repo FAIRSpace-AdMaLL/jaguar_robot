@@ -75,8 +75,9 @@ Publishes to (name / type):
 #include <boost/lexical_cast.hpp>
 
 #include <ros/ros.h>
-#include "tf/transform_broadcaster.h"
-#include <tf/transform_listener.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/TransformStamped.h>
 
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
@@ -144,11 +145,11 @@ public:
     private_nh.getParam("MotorDir", motorDir_);
     ROS_INFO("I get MotorDir: [%d]", motorDir_);
 
-    wheelRadius_ = 0.135; //0.135;
+    wheelRadius_ = 0.135;
     private_nh.getParam("WheelRadius", wheelRadius_);
     ROS_INFO("I get Wheel Radius: [%f]", wheelRadius_);
 
-    wheelDis_ = 0.35; //0.52;
+    wheelDis_ = 0.475; //0.52;
     private_nh.getParam("WheelDistance", wheelDis_);
     ROS_INFO("I get Wheel Distance: [%f]", wheelDis_);
 
@@ -156,7 +157,7 @@ public:
     private_nh.getParam("MinSpeed", minSpeed_);
     ROS_INFO("I get Min Speed: [%f]", minSpeed_);
 
-    maxSpeed_ = 1.0;
+    maxSpeed_ = 1.5;
     private_nh.getParam("MaxSpeed", maxSpeed_);
     ROS_INFO("I get Max Speed: [%f]", maxSpeed_);
 
@@ -201,6 +202,11 @@ public:
     {
     }
     cntNum_ = 0;
+
+    odometry.header.frame_id = "odom";
+    transformStamped.header.frame_id = "odom";
+    transformStamped.child_frame_id = "base_link";
+    last_time_ = ros::Time::now().toSec();
   }
 
   ~DrRobotPlayerNode()
@@ -232,7 +238,7 @@ public:
     motor_cmd_sub_ = node_.subscribe<geometry_msgs::Twist>("drrobot_cmd_vel", 1, boost::bind(&DrRobotPlayerNode::cmdReceived, this, _1));
 
     //Reset odometry
-    odomX = odomY = odomPhi = lastTime = lastForward = lastTurn = 0;
+    odom_x_ = odom_y_ = odom_theta_ = lastTime = lastForward = lastTurn = 0;
     odoTimer.reset();
     odoTimer.start();
 
@@ -284,31 +290,6 @@ public:
     int nLen = strlen(ss.str().c_str());
     //	 ROS_INFO("Received motor command len: [%d]", nLen);
     drrobotMotionDriver_->sendCommand(ss.str().c_str(), nLen);
-
-    //dead-reckoning (odometry) estimation
-    float odometryTime = odoTimer.getTime() / 1000.0;
-    std::cout << "Time " << odometryTime << std::endl;
-    float displacement = lastForward * (odometryTime - lastTime);
-    odomX += displacement * cos(odomPhi);
-    odomY += displacement * sin(odomPhi);
-    odomPhi = lastTurn;
-    lastTime = odometryTime;
-    lastForward = g_vel;
-    lastTurn = t_vel;
-    std::cout << "Odometry x " << odomX << " y " << odomY << " phi " << odomPhi << std::endl;
-    odometry.pose.pose.position.x = odomX;
-    odometry.pose.pose.position.y = odomY;
-    odometry.pose.pose.position.z = 0;
-    tf::Quaternion orientation;
-    orientation.setRPY(0, 0, odomPhi);
-    odometry.pose.pose.orientation.x = orientation[0];
-    odometry.pose.pose.orientation.y = orientation[1];
-    odometry.pose.pose.orientation.z = orientation[2];
-    odometry.pose.pose.orientation.w = orientation[3];
-    odometry.header.frame_id = "odom";
-    odometryPub.publish(odometry);
-
-    //  ROS_INFO("publish GPS Info");
   }
 
   void doUpdate()
@@ -391,20 +372,74 @@ public:
     //    ROS_INFO("publish IMU sensor data");
     imu_pub_.publish(imuData);
 
-    jaguar4x4_2014::GPSInfo gpsInfo;
-    gpsInfo.header.stamp = ros::Time::now();
-    gpsInfo.header.frame_id = string("drrobot_gps_");
-    gpsInfo.header.frame_id += boost::lexical_cast<std::string>(cntNum_);
+    // dead-reckoning (odometry) estimation
+    // motor_0 -> front left
+    // motor_1 -> front right
+    // motor_2 -> back left
+    // motor_3 -> back right
 
-    gpsInfo.time = gpsSensorData_.timeStamp;
-    gpsInfo.date = gpsSensorData_.dateStamp;
-    gpsInfo.status = gpsSensorData_.gpsStatus;
-    gpsInfo.latitude = gpsSensorData_.latitude;
-    gpsInfo.longitude = gpsSensorData_.longitude;
-    gpsInfo.vog = gpsSensorData_.vog;
-    gpsInfo.cog = gpsSensorData_.cog;
+    const double dist_per_tick = 2 * wheelRadius_ * 3.14 / encoderOneCircleCnt_;
 
-    gps_pub_.publish(gpsInfo);
+    double l_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[0] + motorSensorData_.motorSensorEncoderPosDiff[2]) * 0.5; 
+    double r_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[1] + motorSensorData_.motorSensorEncoderPosDiff[3]) * -0.5;
+    std::cout << "left_pos: " << l_est_pos << " right_pos: " << r_est_pos << std::endl;
+
+    ros::Time time_now = ros::Time::now();
+    // double l_est_vel = l_est_pos / (time_now.toSec() - last_time_);
+    // double r_est_vel = r_est_pos / (time_now.toSec() - last_time_);
+    // std::cout << "left_v: " << l_est_vel << " right_v: " << r_est_vel << std::endl;
+
+    // Compute linear and angular diff:
+    double linear =  (r_est_pos + l_est_pos) * 0.5 / 10;
+    double angular = (r_est_pos - l_est_pos) / wheelDis_;
+    std::cout << "Linear: " << linear << " angular: " << angular << std::endl;
+
+    // Integrate
+    odom_theta_ += angular;
+    odom_x_ += linear * cos(odom_theta_);
+    odom_y_ += linear * sin(odom_theta_);
+
+    std::cout << "Odometry x " << odom_x_ << " y " << odom_y_ << " phi " << odom_theta_ << std::endl;
+    
+    tf2::Quaternion orientation;
+    orientation.setRPY(0, 0, odom_theta_);
+
+    odometry.header.stamp = time_now;
+    odometry.pose.pose.position.x = odom_x_;
+    odometry.pose.pose.position.y = odom_y_;
+    odometry.pose.pose.position.z = 0;
+    odometry.pose.pose.orientation.x = orientation[0];
+    odometry.pose.pose.orientation.y = orientation[1];
+    odometry.pose.pose.orientation.z = orientation[2];
+    odometry.pose.pose.orientation.w = orientation[3];
+    odometryPub.publish(odometry);
+
+    transformStamped.header.stamp = time_now;
+    transformStamped.transform.translation.x = odom_x_;
+    transformStamped.transform.translation.y = odom_y_;
+    transformStamped.transform.translation.z = 0.0;
+    transformStamped.transform.rotation.x = orientation[0];
+    transformStamped.transform.rotation.y = orientation[1];
+    transformStamped.transform.rotation.z = orientation[2];
+    transformStamped.transform.rotation.w = orientation[3];
+    tf_br.sendTransform(transformStamped);
+
+    last_time_ = time_now.toSec();
+
+    // jaguar4x4_2014::GPSInfo gpsInfo;
+    // gpsInfo.header.stamp = ros::Time::now();
+    // gpsInfo.header.frame_id = string("drrobot_gps_");
+    // gpsInfo.header.frame_id += boost::lexical_cast<std::string>(cntNum_);
+
+    // gpsInfo.time = gpsSensorData_.timeStamp;
+    // gpsInfo.date = gpsSensorData_.dateStamp;
+    // gpsInfo.status = gpsSensorData_.gpsStatus;
+    // gpsInfo.latitude = gpsSensorData_.latitude;
+    // gpsInfo.longitude = gpsSensorData_.longitude;
+    // gpsInfo.vog = gpsSensorData_.vog;
+    // gpsInfo.cog = gpsSensorData_.cog;
+
+    // gps_pub_.publish(gpsInfo);
 
     //send ping command here
     drrobotMotionDriver_->sendCommand("PING", 4);
@@ -439,7 +474,9 @@ private:
   //odometry status
   CTimer odoTimer;
   float lastTime, lastForward, lastTurn;
-  float odomX, odomY, odomPhi;
+  double odom_x_, odom_y_, odom_theta_, last_time_;
+  tf2_ros::TransformBroadcaster tf_br;
+  geometry_msgs::TransformStamped transformStamped;
 };
 
 int main(int argc, char **argv)
