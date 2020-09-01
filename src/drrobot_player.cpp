@@ -268,55 +268,55 @@ public:
     {
       	double g_vel = cmd_vel->linear.x;
         double t_vel = cmd_vel->angular.z * 1.5;
-	std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
+	      std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
         double leftWheel = (2 * g_vel - t_vel* wheelDis_) / (2 * wheelRadius_);
         double rightWheel = (t_vel* wheelDis_ + 2 * g_vel) / (2 * wheelRadius_);
 
         int leftWheelCmd = motorDir_ * leftWheel * encoderOneCircleCnt_ / ( 2* 3.1415927);
         int rightWheelCmd = - motorDir_ * rightWheel * encoderOneCircleCnt_ / ( 2* 3.1415927);
         
-	ROS_INFO("Received control command: [%d, %d]", leftWheelCmd,rightWheelCmd);
+      	ROS_INFO("Received control command: [%d, %d]", leftWheelCmd,rightWheelCmd);
 
-	std::stringstream ss;
- 
-	ss << "MMW !M " << leftWheelCmd; 
-	ss << " " << rightWheelCmd;
-	ss.seekg(0,std::ios::end);
-	int size = ss.tellg();
-	ss.seekg(0,std::ios::beg);
-	//cmdVel_string.data = ss.str();
-	//ss.str("");
+      	std::stringstream ss;
+       
+      	ss << "MMW !M " << leftWheelCmd; 
+      	ss << " " << rightWheelCmd;
+      	ss.seekg(0,std::ios::end);
+      	int size = ss.tellg();
+      	ss.seekg(0,std::ios::beg);
+      	//cmdVel_string.data = ss.str();
+      	//ss.str("");
 
         ROS_INFO("Received motor command: []");
-	std::cout << ss.str() << std::endl;
-	int nLen = strlen(ss.str().c_str());
-//	 ROS_INFO("Received motor command len: [%d]", nLen);
+      	std::cout << ss.str() << std::endl;
+      	int nLen = strlen(ss.str().c_str());
+        // ROS_INFO("Received motor command len: [%d]", nLen);
         drrobotMotionDriver_->sendCommand(ss.str().c_str(), nLen);
-      
-   	//dead-reckoning (odometry) estimation 
-	float odometryTime = odoTimer.getTime()/1000.0;
-	std::cout << "Time " << odometryTime << std::endl;
-	float displacement = lastForward*(odometryTime-lastTime);
-	odomX += displacement*cos(odomPhi);
-	odomY += displacement*sin(odomPhi);
-	odomPhi = lastTurn; 
-	lastTime = odometryTime; 
-	lastForward = g_vel;
-	lastTurn = t_vel;
-	std::cout << "Odometry x " << odomX << " y "<< odomY << " phi " << odomPhi << std::endl;
+            
+        // dead-reckoning (odometry) estimation 
+      	float odometryTime = odoTimer.getTime()/1000.0;
+      	std::cout << "Time " << odometryTime << std::endl;
+      	float displacement = lastForward*(odometryTime-lastTime);
+      	odomX += displacement*cos(odomPhi);
+      	odomY += displacement*sin(odomPhi);
+      	odomPhi = lastTurn; 
+      	lastTime = odometryTime; 
+      	lastForward = g_vel;
+      	lastTurn = t_vel;
+      	std::cout << "Odometry x " << odomX << " y "<< odomY << " phi " << odomPhi << std::endl;
         odometry.pose.pose.position.x = odomX;
       	odometry.pose.pose.position.y = odomY;
       	odometry.pose.pose.position.z = 0;
       	tf::Quaternion orientation;
       	orientation.setRPY(0,0,odomPhi);
       	odometry.pose.pose.orientation.x = orientation[0];
-     	odometry.pose.pose.orientation.y = orientation[1];
+     	  odometry.pose.pose.orientation.y = orientation[1];
       	odometry.pose.pose.orientation.z = orientation[2];
         odometry.pose.pose.orientation.w = orientation[3];
-	odometry.header.frame_id = "odom"; 
+	      odometry.header.frame_id = "odom"; 
       	odometryPub.publish(odometry);
 
-            //  ROS_INFO("publish GPS Info");
+        // ROS_INFO("publish GPS Info");
     }
 
     void doUpdate()
