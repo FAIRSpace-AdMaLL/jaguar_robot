@@ -3,7 +3,7 @@
 <launch>
 
 <!-- robot drivers -->
-  <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers">
+  <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers" output="screen">
   </node>
 
 <!-- zed camera drivers -->

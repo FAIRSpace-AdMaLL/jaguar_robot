@@ -78,6 +78,7 @@ Publishes to (name / type):
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <sensor_msgs/Imu.h>
 
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Twist.h>
@@ -188,10 +189,10 @@ public:
     motorInfo_pub_ = node_.advertise<jaguar4x4_2014::MotorDataArray>("drrobot_motor", 1);
     motorBoardInfo_pub_ = node_.advertise<jaguar4x4_2014::MotorBoardInfoArray>("drrobot_motorboard", 1);
     gps_pub_ = node_.advertise<jaguar4x4_2014::GPSInfo>("drrobot_gps", 1);
-    imu_pub_ = node_.advertise<jaguar4x4_2014::IMUData>("drrobot_imu", 1);
+    imu_pub_ = node_.advertise<sensor_msgs::Imu>("drrobot_imu", 1);
 
     //Odometry publish
-    odometryPub = node_.advertise<nav_msgs::Odometry>("/odom", 1);
+    odometryPub = node_.advertise<nav_msgs::Odometry>("/raw_odom", 1);
 
     drrobotMotionDriver_ = new DrRobotMotionSensorDriver();
     if ((robotType_ == "Jaguar"))
@@ -266,14 +267,14 @@ public:
   {
     double g_vel = cmd_vel->linear.x;
     double t_vel = cmd_vel->angular.z * 1.5;
-    std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
+    // std::cout << " g vel" << g_vel << " t " << t_vel << std::endl;
     double leftWheel = (2 * g_vel - t_vel * wheelDis_) / (2 * wheelRadius_);
     double rightWheel = (t_vel * wheelDis_ + 2 * g_vel) / (2 * wheelRadius_);
 
     int leftWheelCmd = motorDir_ * leftWheel * encoderOneCircleCnt_ / (2 * 3.1415927);
     int rightWheelCmd = -motorDir_ * rightWheel * encoderOneCircleCnt_ / (2 * 3.1415927);
 
-    ROS_INFO("Received control command: [%d, %d]", leftWheelCmd, rightWheelCmd);
+    // ROS_INFO("Received control command: [%d, %d]", leftWheelCmd, rightWheelCmd);
 
     std::stringstream ss;
 
@@ -285,8 +286,8 @@ public:
     //cmdVel_string.data = ss.str();
     //ss.str("");
 
-    ROS_INFO("Received motor command: []");
-    std::cout << ss.str() << std::endl;
+    // ROS_INFO("Received motor command: []");
+    // std::cout << ss.str() << std::endl;
     int nLen = strlen(ss.str().c_str());
     //	 ROS_INFO("Received motor command len: [%d]", nLen);
     drrobotMotionDriver_->sendCommand(ss.str().c_str(), nLen);
@@ -346,27 +347,29 @@ public:
     //ROS_INFO("publish motor driver board info array");
     motorBoardInfo_pub_.publish(motorBoardInfoArray);
 
-    jaguar4x4_2014::IMUData imuData;
+    sensor_msgs::Imu imuData;
     imuData.header.stamp = ros::Time::now();
-    imuData.header.frame_id = string("drrobot_imu_");
-    imuData.header.frame_id += boost::lexical_cast<std::string>(cntNum_);
+    imuData.header.frame_id = string("base_link");
 
-    imuData.seq = imuSensorData_.seq;
-    imuData.yaw = imuSensorData_.yaw;
-    imuData.pitch = imuSensorData_.pitch;
-    imuData.roll = imuSensorData_.roll;
+    tf2::Quaternion orientation;
+    orientation.setRPY(imuSensorData_.roll, imuSensorData_.pitch, imuSensorData_.yaw);
 
-    imuData.gyro_x = imuSensorData_.gyro_x;
-    imuData.gyro_y = imuSensorData_.gyro_y;
-    imuData.gyro_z = imuSensorData_.gyro_z;
+    imuData.orientation.x = orientation[0];
+    imuData.orientation.y = orientation[1];
+    imuData.orientation.z = orientation[2];
+    imuData.orientation.w = orientation[3];
 
-    imuData.accel_x = imuSensorData_.accel_x;
-    imuData.accel_y = imuSensorData_.accel_y;
-    imuData.accel_z = imuSensorData_.accel_z;
+    imuData.angular_velocity.x = imuSensorData_.gyro_x;
+    imuData.angular_velocity.y = imuSensorData_.gyro_y;
+    imuData.angular_velocity.z = imuSensorData_.gyro_z;
 
-    imuData.comp_x = imuSensorData_.comp_x;
-    imuData.comp_y = imuSensorData_.comp_y;
-    imuData.comp_z = imuSensorData_.comp_z;
+    imuData.linear_acceleration.x = imuSensorData_.accel_x;
+    imuData.linear_acceleration.y = imuSensorData_.accel_y;
+    imuData.linear_acceleration.z = imuSensorData_.accel_z;
+
+    // imuData.comp_x = imuSensorData_.comp_x;
+    // imuData.comp_y = imuSensorData_.comp_y;
+    // imuData.comp_z = imuSensorData_.comp_z;
 
     //    ROS_INFO("SeqNum [%d]",  imuData.seq );
     //    ROS_INFO("publish IMU sensor data");
@@ -378,11 +381,11 @@ public:
     // motor_2 -> back left
     // motor_3 -> back right
 
-    const double dist_per_tick = 2 * wheelRadius_ * 3.14 / encoderOneCircleCnt_;
+    const double dist_per_tick = 2 * 3.14 * wheelRadius_ / 3800;
 
     double l_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[0] + motorSensorData_.motorSensorEncoderPosDiff[2]) * 0.5; 
     double r_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[1] + motorSensorData_.motorSensorEncoderPosDiff[3]) * -0.5;
-    std::cout << "left_pos: " << l_est_pos << " right_pos: " << r_est_pos << std::endl;
+    ROS_INFO_STREAM_THROTTLE(1, "left_pos: " << l_est_pos << " right_pos: " << r_est_pos);
 
     ros::Time time_now = ros::Time::now();
     // double l_est_vel = l_est_pos / (time_now.toSec() - last_time_);
@@ -390,28 +393,28 @@ public:
     // std::cout << "left_v: " << l_est_vel << " right_v: " << r_est_vel << std::endl;
 
     // Compute linear and angular diff:
-    double linear =  (r_est_pos + l_est_pos) * 0.5 / 10;
+    double linear =  (r_est_pos + l_est_pos) * 0.5;
     double angular = (r_est_pos - l_est_pos) / wheelDis_;
-    std::cout << "Linear: " << linear << " angular: " << angular << std::endl;
+    // std::cout << "Linear: " << linear << " angular: " << angular << std::endl;
 
     // Integrate
     odom_theta_ += angular;
     odom_x_ += linear * cos(odom_theta_);
     odom_y_ += linear * sin(odom_theta_);
 
-    std::cout << "Odometry x " << odom_x_ << " y " << odom_y_ << " phi " << odom_theta_ << std::endl;
-    
-    tf2::Quaternion orientation;
-    orientation.setRPY(0, 0, odom_theta_);
+    // std::cout << "Odometry x " << odom_x_ << " y " << odom_y_ << " phi " << odom_theta_ << std::endl;
 
     odometry.header.stamp = time_now;
     odometry.pose.pose.position.x = odom_x_;
     odometry.pose.pose.position.y = odom_y_;
     odometry.pose.pose.position.z = 0;
+    
+    orientation.setRPY(0, 0, odom_theta_);
     odometry.pose.pose.orientation.x = orientation[0];
     odometry.pose.pose.orientation.y = orientation[1];
     odometry.pose.pose.orientation.z = orientation[2];
     odometry.pose.pose.orientation.w = orientation[3];
+    // odometry.pose.covariance = 
     odometryPub.publish(odometry);
 
     transformStamped.header.stamp = time_now;
