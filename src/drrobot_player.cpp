@@ -111,6 +111,7 @@ public:
   ros::Publisher imu_pub_;
   ros::Publisher odometryPub;
   ros::Subscriber motor_cmd_sub_;
+  ros::Subscriber imu_sub_;
   std::string robot_prefix_;
   nav_msgs::Odometry odometry;
 
@@ -158,7 +159,7 @@ public:
     private_nh.getParam("MinSpeed", minSpeed_);
     ROS_INFO("I get Min Speed: [%f]", minSpeed_);
 
-    maxSpeed_ = 1.5;
+    maxSpeed_ = 2.5;
     private_nh.getParam("MaxSpeed", maxSpeed_);
     ROS_INFO("I get Max Speed: [%f]", maxSpeed_);
 
@@ -188,11 +189,14 @@ public:
     //create publishers for sensor data information
     motorInfo_pub_ = node_.advertise<jaguar4x4_2014::MotorDataArray>("drrobot_motor", 1);
     motorBoardInfo_pub_ = node_.advertise<jaguar4x4_2014::MotorBoardInfoArray>("drrobot_motorboard", 1);
-    gps_pub_ = node_.advertise<jaguar4x4_2014::GPSInfo>("drrobot_gps", 1);
-    imu_pub_ = node_.advertise<sensor_msgs::Imu>("drrobot_imu", 1);
+    // gps_pub_ = node_.advertise<jaguar4x4_2014::GPSInfo>("drrobot_gps", 1);
+    // imu_pub_ = node_.advertise<sensor_msgs::Imu>("/drrobot_imu", 1);
 
     //Odometry publish
-    odometryPub = node_.advertise<nav_msgs::Odometry>("/raw_odom", 1);
+    odometryPub = node_.advertise<nav_msgs::Odometry>("/encoder_odom", 1);
+
+    imu_pub_ = node_.advertise<sensor_msgs::Imu>("/imu_w_cov", 1);
+    imu_sub_ = node_.subscribe<sensor_msgs::Imu>("/imu/data",  1, boost::bind(&DrRobotPlayerNode::imuCallback, this, _1));
 
     drrobotMotionDriver_ = new DrRobotMotionSensorDriver();
     if ((robotType_ == "Jaguar"))
@@ -293,6 +297,28 @@ public:
     drrobotMotionDriver_->sendCommand(ss.str().c_str(), nLen);
   }
 
+  void imuCallback(const sensor_msgs::Imu::ConstPtr &imu_data)
+  {
+    sensor_msgs::Imu imuData = *imu_data;
+    
+    imuData.orientation_covariance = boost::array<double, 9>({
+      0.01, 0.0, 0.0,
+      0.0, 0.01, 0.0,
+      0.0, 0.0, 0.01});
+
+    imuData.angular_velocity_covariance = boost::array<double, 9>({
+      0.01, 0.0, 0.0,
+      0.0, 0.01, 0.0,
+      0.0, 0.0, 0.01});
+  
+    imuData.linear_acceleration_covariance = boost::array<double, 9>({
+      0.01, 0.0, 0.0,
+      0.0, 0.01, 0.0,
+      0.0, 0.0, 0.0});
+
+    imu_pub_.publish(imuData);
+  }
+
   void doUpdate()
   {
     //int test = imuSensorData_.seq;
@@ -347,33 +373,45 @@ public:
     //ROS_INFO("publish motor driver board info array");
     motorBoardInfo_pub_.publish(motorBoardInfoArray);
 
-    sensor_msgs::Imu imuData;
-    imuData.header.stamp = ros::Time::now();
-    imuData.header.frame_id = string("base_link");
+    // sensor_msgs::Imu imuData;
+    // imuData.header.stamp = ros::Time::now();
+    // imuData.header.frame_id = string("base_link");
 
     tf2::Quaternion orientation;
-    orientation.setRPY(imuSensorData_.roll, imuSensorData_.pitch, imuSensorData_.yaw);
+    // orientation.setRPY(imuSensorData_.roll, imuSensorData_.pitch, imuSensorData_.yaw);
 
-    imuData.orientation.x = orientation[0];
-    imuData.orientation.y = orientation[1];
-    imuData.orientation.z = orientation[2];
-    imuData.orientation.w = orientation[3];
+    // imuData.orientation.x = orientation[0];
+    // imuData.orientation.y = orientation[1];
+    // imuData.orientation.z = orientation[2];
+    // imuData.orientation.w = orientation[3];
+    // imuData.orientation_covariance = boost::array<double, 9>({
+    //   0.01, 0.0, 0.0,
+    //   0.0, 0.01, 0.0,
+    //   0.0, 0.0, 10});
 
-    imuData.angular_velocity.x = imuSensorData_.gyro_x;
-    imuData.angular_velocity.y = imuSensorData_.gyro_y;
-    imuData.angular_velocity.z = imuSensorData_.gyro_z;
+    // imuData.angular_velocity.x = static_cast<double>(imuSensorData_.gyro_x);
+    // imuData.angular_velocity.y = static_cast<double>(imuSensorData_.gyro_y);
+    // imuData.angular_velocity.z = static_cast<double>(imuSensorData_.gyro_z);
+    // imuData.angular_velocity_covariance = boost::array<double, 9>({
+    //   0.01, 0.0, 0.0,
+    //   0.0, 0.01, 0.0,
+    //   0.0, 0.0, 50});
 
-    imuData.linear_acceleration.x = imuSensorData_.accel_x;
-    imuData.linear_acceleration.y = imuSensorData_.accel_y;
-    imuData.linear_acceleration.z = imuSensorData_.accel_z;
+    // imuData.linear_acceleration.x = static_cast<double>(imuSensorData_.accel_x);
+    // imuData.linear_acceleration.y = static_cast<double>(imuSensorData_.accel_y);
+    // imuData.linear_acceleration.z = static_cast<double>(imuSensorData_.accel_z);
+    // imuData.linear_acceleration_covariance = boost::array<double, 9>({
+    //   10, 0.0, 0.0,
+    //   0.0, 10, 0.0,
+    //   0.0, 0.0, 0.0});
 
-    // imuData.comp_x = imuSensorData_.comp_x;
-    // imuData.comp_y = imuSensorData_.comp_y;
-    // imuData.comp_z = imuSensorData_.comp_z;
+    // // imuData.comp_x = imuSensorData_.comp_x;
+    // // imuData.comp_y = imuSensorData_.comp_y;
+    // // imuData.comp_z = imuSensorData_.comp_z;
 
-    //    ROS_INFO("SeqNum [%d]",  imuData.seq );
-    //    ROS_INFO("publish IMU sensor data");
-    imu_pub_.publish(imuData);
+    // // ROS_INFO("SeqNum [%d]",  imuData.seq );
+    // // ROS_INFO("publish IMU sensor data");
+    // imu_pub_.publish(imuData);
 
     // dead-reckoning (odometry) estimation
     // motor_0 -> front left
@@ -385,7 +423,7 @@ public:
 
     double l_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[0] + motorSensorData_.motorSensorEncoderPosDiff[2]) * 0.5; 
     double r_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[1] + motorSensorData_.motorSensorEncoderPosDiff[3]) * -0.5;
-    ROS_INFO_STREAM_THROTTLE(1, "left_pos: " << l_est_pos << " right_pos: " << r_est_pos);
+    // ROS_INFO_STREAM_THROTTLE(1, "left_pos: " << l_est_pos << " right_pos: " << r_est_pos);
 
     ros::Time time_now = ros::Time::now();
     // double l_est_vel = l_est_pos / (time_now.toSec() - last_time_);
@@ -394,7 +432,7 @@ public:
 
     // Compute linear and angular diff:
     double linear =  (r_est_pos + l_est_pos) * 0.5;
-    double angular = (r_est_pos - l_est_pos) / wheelDis_;
+    double angular = 0.5 * (r_est_pos - l_est_pos) / wheelDis_;
     // std::cout << "Linear: " << linear << " angular: " << angular << std::endl;
 
     // Integrate
@@ -414,7 +452,31 @@ public:
     odometry.pose.pose.orientation.y = orientation[1];
     odometry.pose.pose.orientation.z = orientation[2];
     odometry.pose.pose.orientation.w = orientation[3];
-    // odometry.pose.covariance = 
+
+    // odometry.pose.covariance = boost::array<double, 36>({
+    //       0.01, 0., 0., 0., 0., 0.,
+    //       0., 0.01, 0., 0., 0., 0.,
+    //       0., 0., 0., 0., 0., 0.,
+    //       0., 0., 0., 0., 0., 0.,
+    //       0., 0., 0., 0., 0., 0.,
+    //       0., 0., 0., 0., 0., 0.1});
+
+    odometry.twist.twist.linear.x = linear;
+    odometry.twist.twist.linear.y = 0;
+    odometry.twist.twist.linear.z = 0;
+
+    odometry.twist.twist.angular.x = 0;
+    odometry.twist.twist.angular.y = 0;
+    odometry.twist.twist.angular.z = angular;
+
+    odometry.twist.covariance = boost::array<double, 36>({
+          0.001, 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0.,
+          0., 0., 0., 0., 0., 0.1});
+
     odometryPub.publish(odometry);
 
     transformStamped.header.stamp = time_now;
@@ -425,7 +487,7 @@ public:
     transformStamped.transform.rotation.y = orientation[1];
     transformStamped.transform.rotation.z = orientation[2];
     transformStamped.transform.rotation.w = orientation[3];
-    tf_br.sendTransform(transformStamped);
+    // tf_br.sendTransform(transformStamped);
 
     last_time_ = time_now.toSec();
 
