@@ -71,7 +71,7 @@
    </include>
 
    <node pkg="fisheye" type="panorama" name="fisheye">
-        <arg name="resize_factor" value="0.5"/>
+        <param name="resize_factor" value="0.5"/>
    </node>
 </group>
 
