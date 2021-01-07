@@ -456,18 +456,14 @@ public:
     //       0., 0., 0., 0., 0., 0.,
     //       0., 0., 0., 0., 0., 0.1});
 
-    double l_est_vel = l_est_pos / (time_now.toSec() - last_time_);
-    double r_est_vel = r_est_pos / (time_now.toSec() - last_time_);
-    last_time_ = time_now.toSec();
-    // std::cout << "left_v: " << l_est_vel << " right_v: " << r_est_vel << std::endl;
-
-    odometry.twist.twist.linear.x = (r_est_vel + l_est_vel) * 0.5;
+    odometry.twist.twist.linear.x = linear / (time_now.toSec() - last_time_);
     odometry.twist.twist.linear.y = 0;
     odometry.twist.twist.linear.z = 0;
 
     odometry.twist.twist.angular.x = 0;
     odometry.twist.twist.angular.y = 0;
-    odometry.twist.twist.angular.z = 0.5 * (r_est_vel - l_est_vel) / wheelDis_;;
+    odometry.twist.twist.angular.z = angular / (time_now.toSec() - last_time_);
+    last_time_ = time_now.toSec();
 
     odometry.twist.covariance = boost::array<double, 36>({
           0.001, 0., 0., 0., 0., 0.,
