@@ -64,7 +64,6 @@ Publishes to (name / type):
 #include <stdlib.h>
 #include <sys/poll.h>
 
-
 #include <boost/thread/thread.hpp>
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -78,41 +77,39 @@ Publishes to (name / type):
 #define KEYCODE_S_CAP 0x53
 #define KEYCODE_D_CAP 0x44
 
-
-
 class DrRobotKeyboardTeleopNode
 {
-    private:
-        geometry_msgs::Twist cmdvel_;
-        ros::NodeHandle n_;
-        ros::Publisher pub_;
+private:
+    geometry_msgs::Twist cmdvel_;
+    ros::NodeHandle n_;
+    ros::Publisher pub_;
 
-    public:
-        DrRobotKeyboardTeleopNode()
-        {
-            pub_ = n_.advertise<geometry_msgs::Twist>("drrobot_cmd_vel", 1);
-            ros::NodeHandle n_private("~");
-        }
+public:
+    DrRobotKeyboardTeleopNode()
+    {
+        pub_ = n_.advertise<geometry_msgs::Twist>("drrobot_cmd_vel", 1);
+        ros::NodeHandle n_private("~");
+    }
 
-        ~DrRobotKeyboardTeleopNode() { }
-        void keyboardLoop();
+    ~DrRobotKeyboardTeleopNode() {}
+    void keyboardLoop();
 
-        void stopRobot()
-        {
-            cmdvel_.linear.x = 0.0;
-            cmdvel_.angular.z = 0.0;
-            pub_.publish(cmdvel_);
-        }
+    void stopRobot()
+    {
+        cmdvel_.linear.x = 0.0;
+        cmdvel_.angular.z = 0.0;
+        pub_.publish(cmdvel_);
+    }
 };
 
-DrRobotKeyboardTeleopNode* tbk;
+DrRobotKeyboardTeleopNode *tbk;
 int kfd = 0;
 struct termios cooked, raw;
 bool done;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    ros::init(argc,argv,"drrobot_teleope_keyboard", ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
+    ros::init(argc, argv, "drrobot_teleope_keyboard", ros::init_options::AnonymousName | ros::init_options::NoSigintHandler);
     DrRobotKeyboardTeleopNode tbk;
 
     boost::thread t = boost::thread(boost::bind(&DrRobotKeyboardTeleopNode::keyboardLoop, &tbk));
@@ -124,7 +121,7 @@ int main(int argc, char** argv)
     tbk.stopRobot();
     tcsetattr(kfd, TCSANOW, &cooked);
 
-    return(0);
+    return (0);
 }
 
 void DrRobotKeyboardTeleopNode::keyboardLoop()
@@ -134,11 +131,10 @@ void DrRobotKeyboardTeleopNode::keyboardLoop()
     double maxTurn = .5;
     bool dirty = false;
 
-
     // get the console in raw mode
     tcgetattr(kfd, &cooked);
     memcpy(&raw, &cooked, sizeof(struct termios));
-    raw.c_lflag &=~ (ICANON | ECHO);
+    raw.c_lflag &= ~(ICANON | ECHO);
     raw.c_cc[VEOL] = 1;
     raw.c_cc[VEOF] = 2;
     tcsetattr(kfd, TCSANOW, &raw);
@@ -151,7 +147,7 @@ void DrRobotKeyboardTeleopNode::keyboardLoop()
     ufd.fd = kfd;
     ufd.events = POLLIN;
 
-    for(;;)
+    for (;;)
     {
         boost::this_thread::interruption_point();
 
@@ -163,9 +159,9 @@ void DrRobotKeyboardTeleopNode::keyboardLoop()
             perror("poll():");
             return;
         }
-        else if(num > 0)
+        else if (num > 0)
         {
-            if(read(kfd, &c, 1) < 0)
+            if (read(kfd, &c, 1) < 0)
             {
                 perror("read():");
                 return;
@@ -182,54 +178,54 @@ void DrRobotKeyboardTeleopNode::keyboardLoop()
             continue;
         }
 
-        switch(c)
+        switch (c)
         {
-            case KEYCODE_W:
-                maxVel = 0.5;
-                maxTurn = 0;
-                dirty = true;
-                break;
-            case KEYCODE_S:
-                maxVel = -0.5;
-                maxTurn = 0;
-                dirty = true;
-                break;
-            case KEYCODE_A:
-                maxVel = 0;
-                maxTurn = 2.0;
-                dirty = true;
-                break;
-            case KEYCODE_D:
-                maxVel = 0;
-                maxTurn = -2.0;
-                dirty = true;
-                break;
+        case KEYCODE_W:
+            maxVel = 0.5;
+            maxTurn = 0;
+            dirty = true;
+            break;
+        case KEYCODE_S:
+            maxVel = -0.5;
+            maxTurn = 0;
+            dirty = true;
+            break;
+        case KEYCODE_A:
+            maxVel = 0;
+            maxTurn = 2.0;
+            dirty = true;
+            break;
+        case KEYCODE_D:
+            maxVel = 0;
+            maxTurn = -2.0;
+            dirty = true;
+            break;
 
-            case KEYCODE_W_CAP:
-                maxVel = 1.0;
-                maxTurn = 0;
-                dirty = true;
-                break;
-            case KEYCODE_S_CAP:
-                maxVel = -1.0;
-                maxTurn = 0;
-                dirty = true;
-                break;
-            case KEYCODE_A_CAP:
-                maxVel = 0;
-                maxTurn = 3.0;
-                dirty = true;
-                break;
-            case KEYCODE_D_CAP:
-                maxVel = 0;
-                maxTurn = -3.0;
-                dirty = true;
-                break;
+        case KEYCODE_W_CAP:
+            maxVel = 1.0;
+            maxTurn = 0;
+            dirty = true;
+            break;
+        case KEYCODE_S_CAP:
+            maxVel = -1.0;
+            maxTurn = 0;
+            dirty = true;
+            break;
+        case KEYCODE_A_CAP:
+            maxVel = 0;
+            maxTurn = 3.0;
+            dirty = true;
+            break;
+        case KEYCODE_D_CAP:
+            maxVel = 0;
+            maxTurn = -3.0;
+            dirty = true;
+            break;
 
-            default:
-                maxTurn = 0;
-                maxTurn = 0;
-                dirty = false;
+        default:
+            maxTurn = 0;
+            maxTurn = 0;
+            dirty = false;
         }
 
         cmdvel_.linear.x = maxVel;
@@ -238,4 +234,3 @@ void DrRobotKeyboardTeleopNode::keyboardLoop()
         pub_.publish(cmdvel_);
     }
 }
-

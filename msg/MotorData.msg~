@@ -1,8 +1,0 @@
-#motor sensor data message from Dr Robot 
-Header header 	   #timestamp in the header is the time the driver
-int motorPower	   # motor driver power from motor driver board
-int encoderPos	   #encoder position reading
-int encoderVel	   #encoder velocity reading
-int encoderDiff	   #encoder position differnece reading referee last reading
-double motorTemp   #motor temperature reading
-double motorCurrent	  #motor current feedback reading

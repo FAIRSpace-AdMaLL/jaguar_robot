@@ -5,7 +5,7 @@
 <arg name="fisheye"            default="false" />
 
 <!-- robot drivers -->
-  <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers">
+  <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers" output="screen">
   </node>
 
 <!-- zed camera drivers -->
@@ -71,7 +71,7 @@
    </include>
 
    <node pkg="fisheye" type="panorama" name="fisheye">
-        <arg name="resize_factor" value="0.5"/>
+        <param name="resize_factor" value="0.5"/>
    </node>
 </group>
 
