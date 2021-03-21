@@ -425,11 +425,6 @@ public:
     double r_est_pos = dist_per_tick * static_cast<double>(motorSensorData_.motorSensorEncoderPosDiff[1] + motorSensorData_.motorSensorEncoderPosDiff[3]) * -0.5;
     // ROS_INFO_STREAM_THROTTLE(1, "left_pos: " << l_est_pos << " right_pos: " << r_est_pos);
 
-    ros::Time time_now = ros::Time::now();
-    // double l_est_vel = l_est_pos / (time_now.toSec() - last_time_);
-    // double r_est_vel = r_est_pos / (time_now.toSec() - last_time_);
-    // std::cout << "left_v: " << l_est_vel << " right_v: " << r_est_vel << std::endl;
-
     // Compute linear and angular diff:
     double linear =  (r_est_pos + l_est_pos) * 0.5;
     double angular = 0.5 * (r_est_pos - l_est_pos) / wheelDis_;
@@ -441,7 +436,7 @@ public:
     odom_y_ += linear * sin(odom_theta_);
 
     // std::cout << "Odometry x " << odom_x_ << " y " << odom_y_ << " phi " << odom_theta_ << std::endl;
-
+    ros::Time time_now = ros::Time::now();
     odometry.header.stamp = time_now;
     odometry.pose.pose.position.x = odom_x_;
     odometry.pose.pose.position.y = odom_y_;
@@ -461,13 +456,14 @@ public:
     //       0., 0., 0., 0., 0., 0.,
     //       0., 0., 0., 0., 0., 0.1});
 
-    odometry.twist.twist.linear.x = linear;
+    odometry.twist.twist.linear.x = linear / (time_now.toSec() - last_time_);
     odometry.twist.twist.linear.y = 0;
     odometry.twist.twist.linear.z = 0;
 
     odometry.twist.twist.angular.x = 0;
     odometry.twist.twist.angular.y = 0;
-    odometry.twist.twist.angular.z = angular;
+    odometry.twist.twist.angular.z = angular / (time_now.toSec() - last_time_);
+    last_time_ = time_now.toSec();
 
     odometry.twist.covariance = boost::array<double, 36>({
           0.001, 0., 0., 0., 0., 0.,
@@ -488,8 +484,6 @@ public:
     transformStamped.transform.rotation.z = orientation[2];
     transformStamped.transform.rotation.w = orientation[3];
     // tf_br.sendTransform(transformStamped);
-
-    last_time_ = time_now.toSec();
 
     // jaguar4x4_2014::GPSInfo gpsInfo;
     // gpsInfo.header.stamp = ros::Time::now();
