@@ -10,7 +10,7 @@ This ROS package is for Jaguar4x4 robot 2014 mode from Dr Robot Inc. The robot m
 - zed2 [driver](https://github.com/stereolabs/zed-ros-wrapper)
 - Xsense IMU driver
 
-## Network setup
+## Network setupOrganized
 
 ### Connecting to the robot
 
@@ -19,31 +19,41 @@ This ROS package is for Jaguar4x4 robot 2014 mode from Dr Robot Inc. The robot m
 - Assign this static IP to your device: `192.168.0.104`
 - Netmask: `255.255.255.0`
 
-To test your connection ping `192.168.0.60`.
+To test your connection: `ping 192.168.0.60`.
 
 ## Connecting to the Ouster-OS1 Lidar
 
-- Install ptp4l
+`connect_lidar` is used to setup the network to communicate with lidar and setup ptp.
 
-    ```sudo apt install -y linuxptp```
-- Using `ifconfig` find your ethernet adapter name
-- Set `eth_interface` variable in the connect_lidar script to your ethernet adapter name
-- Power up the lidar
-- After the lidar has been on for ~20s, plug into your ethernet port
-- Run the `connect_lidar` script
+### One time setup
+
+- Install ptp4l.
 
     ```
-    cd catkin_ws/src/jaguar_robot/scripts
-    chmod +x connect_lidar 
+    sudo apt install -y linuxptp
+    ```
+- Make script excutable.
+    ```
+    cd ~/catkin_ws/src/jaguar_robot/scripts
+    chmod +x connect_lidar
+    ```
+### Establishing a connection
+
+- Power up the lidar.
+- Run the script.
+
+    ```
+    cd ~/catkin_ws/src/jaguar_robot/scripts
     ./connect_lidar
     ```
+- After the lidar has been on for ~20s, plug it in your ethernet port.
 
 ## Usage
 
-- Run robot driver + joystick + sensors (Ouster OS1, IMU, zed2 camera & fisheye camera)
+- Run robot driver + joystick teleop + sensors (Ouster OS1, IMU, zed2 camera & fisheye camera)
 
     ```
-    roslaunch jaguar4x4_2014 run_sensors.launch
+    roslaunch jaguar4x4_2014 move_and_sense.launch
     ```
 
 - Run robot driver + joystick only
