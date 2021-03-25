@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="imu" default="true" />
+    <arg name="lidar" default="true" />
+    <arg name="stereo" default="true" />
+    <arg name="fisheye" default="false" />
+
+    <!-- Run robot driver and joystick teleop -->
+    <include file="$(find jaguar4x4_2014)/launch/run_simple.launch" />
+
+    <!-- Run IMU, if enabled. -->
+    <group if="$(arg imu)">
+        <include file="$(find jaguar4x4_2014)/launch/sensors/run_imu.launch" />
+    </group>
+
+    <!-- Run lidar, if enabled. -->
+    <group if="$(arg lidar)">
+        <include file="$(find jaguar4x4_2014)/launch/sensors/run_lidar.launch" />
+    </group>
+
+    <!-- Run zed2 camera, if enabled. -->
+    <group if="$(arg stereo)">
+        <include file="$(find jaguar4x4_2014)/launch/sensors/run_zed2.launch">
+            <arg name="camera_name" value="zed2" />
+        </include>
+    </group>
+
+    <!-- Run fisheye camera, if enabled. -->
+    <group if="$(arg fisheye)">
+        <include file="$(find jaguar4x4_2014)/launch/sensors/run_fisheye.launch" />
+    </group>
+
+</launch>

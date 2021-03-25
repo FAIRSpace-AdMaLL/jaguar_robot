@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Run Xsense MTi IMU -->
+    <node name="xsens_mti_node" pkg="xsens_mti_driver" type="xsens_mti_node" output="screen">
+        <rosparam command="load" file="$(find lio_sam)/config/xsens_mti_node.yaml" />
+    </node>
+</launch>
