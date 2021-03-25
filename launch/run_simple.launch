@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- robot driver -->
+    <node pkg="jaguar4x4_2014" type="jaguar4x4_2014_node" name="jaguar_drivers" output="screen" />
+
+    <!-- Launch joystick teleop -->
+    <include file="$(find cameleon_teleop)/launch/cameleon_teleop.launch" />
+</launch>
