@@ -10,7 +10,7 @@ This ROS package is for Jaguar4x4 robot 2014 mode from Dr Robot Inc. The robot m
 - zed2 [driver](https://github.com/stereolabs/zed-ros-wrapper)
 - Xsense IMU driver
 
-## Network setupOrganized
+## Network setup
 
 ### Connecting to the robot
 

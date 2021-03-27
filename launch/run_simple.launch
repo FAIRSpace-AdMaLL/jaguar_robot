@@ -5,4 +5,8 @@
 
     <!-- Launch joystick teleop -->
     <include file="$(find cameleon_teleop)/launch/cameleon_teleop.launch" />
+
+    <!-- Publish sensors static tf -->
+    <param name="robot_description" command="$(find xacro)/xacro $(find lio_sam)/urdf/jaguar.urdf --inorder" />
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="state_publisher" output="screen" />
 </launch>
