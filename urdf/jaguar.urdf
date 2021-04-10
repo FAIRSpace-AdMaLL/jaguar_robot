@@ -26,7 +26,7 @@
      <link name="zed2_camera_center"/>
      <joint name="zed2_camera_joint" type="fixed">
          <origin rpy="0 0 0" xyz="0.21866 0 0.34919"/>
-         <parent link="camera_frame"/>
+         <parent link="base_link"/>
          <child link="zed2_camera_center"/>
      </joint>
 </robot>
