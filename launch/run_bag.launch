@@ -13,8 +13,8 @@
     </include>
 
     <!-- Uncompress images -->
-    <!-- <node pkg="image_transport" type="republish" name="left_img_decompresor" output="screen" args="compressed in:=/zed_node/left/image_rect_color raw out:=/zed_node/left/image_rect_color">
-    <node pkg="image_transport" type="republish" name="right_img_decompresor" output="screen" args="compressed in:=/zed_node/right/image_rect_color raw out:=/zed_node/right/image_rect_color">
-    <node pkg="image_transport" type="republish" name="depth_img_decompresor" output="screen" args="compressed in:=/zed_node/depth/depth_registered raw out:=/zed_node/depth/depth_registered"> -->
+    <node pkg="image_transport" type="republish" name="left_img_decompresor" output="screen" args="compressed in:=/zed_node/left/image_rect_color raw out:=/zed_node/left/image_rect_color"/>
+    <node pkg="image_transport" type="republish" name="right_img_decompresor" output="screen" args="compressed in:=/zed_node/right/image_rect_color raw out:=/zed_node/right/image_rect_color"/>
+    <node pkg="image_transport" type="republish" name="depth_img_decompresor" output="screen" args="compressed in:=/zed_node/depth/depth_registered raw out:=/zed_node/depth/depth_registered"/>
 
 </launch>
